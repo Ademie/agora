@@ -57,46 +57,35 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
       
-      showLog("Attempting to login as $currentUserId...");
-      log("Login attempt for user: $currentUserId", name: "AgoraChat");
-      
       try {
         await agoraChatClient.loginWithToken(currentUserId, token);
         showLog("Logged in successfully as $currentUserId");
-        log("Login successful for user: $currentUserId", name: "AgoraChat");
         setState(() {
           isJoined = true;
         });
       } on ChatError catch (e) {
         if (e.code == 200) {
           // Already logged in
-          showLog("Already logged in as $currentUserId");
-          log("User already logged in: $currentUserId", name: "AgoraChat");
+                showLog("Already logged in as $currentUserId");
           setState(() {
             isJoined = true;
           });
         } else {
-          showLog("Login failed, code: ${e.code}, desc: ${e.description}");
-          log("Login failed: ${e.description} (code: ${e.code})", name: "AgoraChat");
+          showLog("Login failed: ${e.description}");
         }
       } catch (e) {
         showLog("Unexpected login error: $e");
-        log("Unexpected login error: $e", name: "AgoraChat");
       }
     } else {
-      // Log out
-      showLog("Logging out...");
       try {
         await agoraChatClient.logout(true);
         showLog("Logged out successfully");
-        log("Logout successful", name: "AgoraChat");
         setState(() {
           isJoined = false;
         });
-      } on ChatError catch (e) {
-        showLog("Logout failed, code: ${e.code}, desc: ${e.description}");
-        log("Logout failed: ${e.description} (code: ${e.code})", name: "AgoraChat");
-      }
+              } on ChatError catch (e) {
+          showLog("Logout failed: ${e.description}");
+        }
     }
   }
 
@@ -128,48 +117,12 @@ class _ChatScreenState extends State<ChatScreen> {
         content: messageContent,
       );
       
-      // Log the complete message payload before sending
-      log("=== MESSAGE PAYLOAD DETAILS ===", name: "AgoraChat");
-      log("Message ID: ${msg.msgId}", name: "AgoraChat");
-      log("From: ${msg.from}", name: "AgoraChat");
-      log("To: ${msg.to}", name: "AgoraChat");
-      log("Target ID: $recipientId", name: "AgoraChat");
-      log("Content: $messageContent", name: "AgoraChat");
-      log("Message Type: ${msg.body.type}", name: "AgoraChat");
-      log("Direction: ${msg.direction}", name: "AgoraChat");
-      log("Status: ${msg.status}", name: "AgoraChat");
-      log("Timestamp: ${msg.serverTime}", name: "AgoraChat");
-      log("Local Time: ${msg.localTime}", name: "AgoraChat");
-      log("================================", name: "AgoraChat");
-      
-      // Send message with detailed logging
-      log("Sending message to Agora servers...", name: "AgoraChat");
       await agoraChatClient.chatManager.sendMessage(msg);
       
-      // Check message status after sending
-      log("Checking message delivery status...", name: "AgoraChat");
-      
-      // Wait a moment for the message to be processed
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Check if the message was actually delivered
       if (msg.status == MessageStatus.SUCCESS) {
         showLog("Message delivered successfully to $currentConversationId", showSnackbar: true);
-        log("=== MESSAGE DELIVERED SUCCESSFULLY ===", name: "AgoraChat");
-        log("Message ID: ${msg.msgId}", name: "AgoraChat");
-        log("Recipient: $currentConversationId", name: "AgoraChat");
-        log("Content: $messageContent", name: "AgoraChat");
-        log("Final Status: ${msg.status}", name: "AgoraChat");
-        log("=====================================", name: "AgoraChat");
       } else {
-        showLog("Message sent but delivery status unclear. Status: ${msg.status}", showSnackbar: true);
-        log("=== MESSAGE SENT BUT STATUS UNCLEAR ===", name: "AgoraChat");
-        log("Message ID: ${msg.msgId}", name: "AgoraChat");
-        log("Recipient: $currentConversationId", name: "AgoraChat");
-        log("Content: $messageContent", name: "AgoraChat");
-        log("Status: ${msg.status}", name: "AgoraChat");
-        log("WARNING: Recipient may not exist or be offline", name: "AgoraChat");
-        log("=========================================", name: "AgoraChat");
+        showLog("Message sent but delivery status unclear", showSnackbar: true);
       }
       
       displayMessage(messageContent, true);
@@ -177,14 +130,9 @@ class _ChatScreenState extends State<ChatScreen> {
       messageContent = "";
       
     } on ChatError catch (e) {
-      showLog("Failed to send message: ${e.description} (code: ${e.code})", showSnackbar: true);
-      log("=== MESSAGE SEND ERROR ===", name: "AgoraChat");
-      log("Error Code: ${e.code}", name: "AgoraChat");
-      log("Error Description: ${e.description}", name: "AgoraChat");
-      log("==========================", name: "AgoraChat");
+      showLog("Failed to send message: ${e.description}", showSnackbar: true);
     } catch (e) {
       showLog("Unexpected error sending message: $e", showSnackbar: true);
-      log("Unexpected error: $e", name: "AgoraChat");
     }
   }
 
@@ -252,8 +200,6 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
       
-      log("Initializing Chat SDK with AppKey: $appKey", name: "AgoraChat");
-      
       ChatOptions options = ChatOptions(appKey: appKey, autoLogin: false);
       agoraChatClient = ChatClient.getInstance;
       await agoraChatClient.init(options);
@@ -262,11 +208,9 @@ class _ChatScreenState extends State<ChatScreen> {
       await ChatClient.getInstance.startCallback();
       
       showLog("Chat SDK initialized successfully");
-      log("Chat SDK initialized successfully", name: "AgoraChat");
       
     } catch (e) {
       showLog("Failed to initialize Chat SDK: $e");
-      log("Chat SDK initialization error: $e", name: "AgoraChat");
     }
   }
 
@@ -291,25 +235,12 @@ class _ChatScreenState extends State<ChatScreen> {
       "MESSAGE_ACK_HANDLER",
       ChatMessageEvent(
         onSuccess: (msgId, msg) {
-          log("=== MESSAGE ACKNOWLEDGMENT RECEIVED ===", name: "AgoraChat");
-          log("Message ID: $msgId", name: "AgoraChat");
-          log("Recipient: ${msg.to}", name: "AgoraChat");
-          log("Status: ${msg.status}", name: "AgoraChat");
-          log("✓ Message was successfully delivered to recipient", name: "AgoraChat");
-          log("=========================================", name: "AgoraChat");
           showLog("✓ Message delivered to ${msg.to}", showSnackbar: true);
         },
         onProgress: (msgId, progress) {
-          log("Message delivery progress: $progress%", name: "AgoraChat");
+          // Progress tracking (silent)
         },
         onError: (msgId, msg, error) {
-          log("=== MESSAGE DELIVERY FAILED ===", name: "AgoraChat");
-          log("Message ID: $msgId", name: "AgoraChat");
-          log("Recipient: ${msg.to}", name: "AgoraChat");
-          log("Error Code: ${error.code}", name: "AgoraChat");
-          log("Error Description: ${error.description}", name: "AgoraChat");
-          log("✗ Message failed to deliver - recipient may not exist", name: "AgoraChat");
-          log("=================================", name: "AgoraChat");
           showLog("✗ Message failed to deliver to ${msg.to}", showSnackbar: true);
         },
       ),
@@ -318,24 +249,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // MARK: EVENT HANDLERS
   void onMessagesReceived(List<ChatMessage> messages) {
-    log("=== MESSAGES RECEIVED ===", name: "AgoraChat");
-    log("Number of messages received: ${messages.length}", name: "AgoraChat");
-    
     for (var msg in messages) {
-      log("--- MESSAGE DETAILS ---", name: "AgoraChat");
-      log("Message ID: ${msg.msgId}", name: "AgoraChat");
-      log("From: ${msg.from}", name: "AgoraChat");
-      log("To: ${msg.to}", name: "AgoraChat");
-      log("Message Type: ${msg.body.type}", name: "AgoraChat");
-      log("Direction: ${msg.direction}", name: "AgoraChat");
-      log("Status: ${msg.status}", name: "AgoraChat");
-      log("Timestamp: ${msg.serverTime}", name: "AgoraChat");
-      log("Local Time: ${msg.localTime}", name: "AgoraChat");
-      
       if (msg.body.type == MessageType.TXT) {
         ChatTextMessageBody body = msg.body as ChatTextMessageBody;
-        log("Content: ${body.content}", name: "AgoraChat");
-        log("Message received from Agora servers!", name: "AgoraChat");
         
         // Add message to the appropriate conversation
         displayMessage(body.content, false, conversationId: msg.from);
@@ -345,12 +261,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _sendDeliveryAck(msg);
       } else {
         String msgType = msg.body.type.name;
-        log("Received $msgType message", name: "AgoraChat");
         showLog("Received $msgType message, from ${msg.from}");
       }
-      log("----------------------", name: "AgoraChat");
     }
-    log("=========================", name: "AgoraChat");
   }
   
 
@@ -359,9 +272,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendDeliveryAck(ChatMessage message) async {
     try {
       await agoraChatClient.chatManager.sendMessageReadAck(message);
-      log("Delivery acknowledgment sent for message: ${message.msgId}", name: "AgoraChat");
     } catch (e) {
-      log("Failed to send delivery ack: $e", name: "AgoraChat");
+      // Silent fail for delivery ack
     }
   }
   
@@ -380,7 +292,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void onConnected() {
-    showLog("Connected");
+    // Connection established (silent)
   }
 
   // MARK: DISPLAY MESSAGES
